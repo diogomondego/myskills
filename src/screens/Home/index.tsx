@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FlatList } from 'react-native';
-import BottomSheet from '@gorhom/bottom-sheet';
+import BottomSheet, { useBottomSheet } from '@gorhom/bottom-sheet';
 import { Q } from '@nozbe/watermelondb'
 
 import { Menu, MenuTypeProps } from '../../components/Menu';
@@ -17,6 +17,7 @@ export function Home() {
   const [name, setName] = useState('');
   const [skills, setSkills] = useState<SkillModel[]>([]);
   const [skill, setSkill] = useState<SkillModel>({} as SkillModel);
+  const [sheetPosition, setSheetPosition] = useState(0);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -78,6 +79,13 @@ export function Home() {
     fetchSkills()
   }, [type])
 
+  useEffect(() => {
+    if (skill.id && !sheetPosition) {
+      setSkill({} as SkillModel)
+      setName('')
+    }
+  }, [sheetPosition])
+
   return (
     <Container>
       <Title>About me</Title>
@@ -102,6 +110,7 @@ export function Home() {
         ref={bottomSheetRef}
         index={0}
         snapPoints={['4%', '35%']}
+        onChange={setSheetPosition}
       >
         <Form>
           <FormTitle>
