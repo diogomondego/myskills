@@ -16,23 +16,52 @@ export function Home() {
   const [type, setType] = useState<MenuTypeProps>("soft");
   const [name, setName] = useState('');
   const [skills, setSkills] = useState<SkillModel[]>([]);
+  const [skill, setSkill] = useState<SkillModel>({} as SkillModel);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const handleSave = async () => {
     const skillsCollection = database.get<SkillModel>('skills');
 
-    await database.write(async () => {
-      await skillsCollection.create(data => {
-        data.name = name
-        data.type = type
+    if (skill.id) {
+      await database.write(async () => {
+        skill.update(data => {
+          data.name = name
+          data.type = type
+        })
       })
-    })
+
+      setSkill({} as SkillModel)
+      alert('Skill updated!')
+    } else {
+      await database.write(async () => {
+        await skillsCollection.create(data => {
+          data.name = name
+          data.type = type
+        })
+      })
+  
+      alert('Skill saved!')
+    }
 
     fetchSkills()
     setName('')
-    alert('Skill saved!')
     bottomSheetRef.current.collapse()
+  }
+
+  const handleRemove = async (item: SkillModel) => {
+    await database.write(async () => {
+      item.destroyPermanently()
+    })
+
+    fetchSkills()
+    alert('Skill deleted!')
+  }
+
+  const handleEdit = async (item: SkillModel) => {
+    setSkill(item)
+    setName(item.name)
+    bottomSheetRef.current.expand()
   }
 
   const fetchSkills = async () => {
@@ -63,8 +92,8 @@ export function Home() {
         renderItem={({ item }) => (
           <Skill
             data={item}
-            onEdit={() => { }}
-            onRemove={() => { }}
+            onEdit={() => handleEdit(item)}
+            onRemove={() => handleRemove(item)}
           />
         )}
       />
@@ -75,7 +104,9 @@ export function Home() {
         snapPoints={['4%', '35%']}
       >
         <Form>
-          <FormTitle>New</FormTitle>
+          <FormTitle>
+            {skill.id ? 'Edit skill' : 'New skill'}
+          </FormTitle>
 
           <Input
             placeholder="New skill..."
