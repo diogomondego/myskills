@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { FlatList } from 'react-native';
 import BottomSheet, { useBottomSheet } from '@gorhom/bottom-sheet';
 import { Q } from '@nozbe/watermelondb'
+import Toast from 'react-native-toast-message';
 
 import { Menu, MenuTypeProps } from '../../components/Menu';
 import { Skill } from '../../components/Skill';
@@ -33,7 +34,10 @@ export function Home() {
       })
 
       setSkill({} as SkillModel)
-      alert('Skill updated!')
+      Toast.show({
+        type: 'success',
+        text1: 'Skill updated!',
+      });
     } else {
       await database.write(async () => {
         await skillsCollection.create(data => {
@@ -42,7 +46,10 @@ export function Home() {
         })
       })
   
-      alert('Skill saved!')
+      Toast.show({
+        type: 'success',
+        text1: 'Skill saved!',
+      });
     }
 
     fetchSkills()
@@ -56,7 +63,10 @@ export function Home() {
     })
 
     fetchSkills()
-    alert('Skill deleted!')
+    Toast.show({
+      type: 'success',
+      text1: 'Skill deleted!',
+    });
   }
 
   const handleEdit = async (item: SkillModel) => {
