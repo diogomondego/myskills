@@ -1,22 +1,30 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FlatList } from 'react-native';
 import BottomSheet, { useBottomSheet } from '@gorhom/bottom-sheet';
-import { Q } from '@nozbe/watermelondb'
 import Toast from 'react-native-toast-message';
+
+import { withDatabase } from '@nozbe/watermelondb/DatabaseProvider'
+import { compose } from 'recompose'
+import withObservables from '@nozbe/with-observables'
 
 import { Menu, MenuTypeProps } from '../../components/Menu';
 import { Skill } from '../../components/Skill';
 import { Button } from '../../components/Button';
 
-import { database } from '../../database'
 import { SkillModel } from '../../database/models/skillModel';
 
 import { Container, Title, Input, Form, FormTitle } from './styles';
+import Database from '@nozbe/watermelondb/Database';
 
-export function Home() {
+type Props = {
+  database: Database,
+  skills: SkillModel[]
+}
+
+export function Home({ database, skills }: Props) {
+
   const [type, setType] = useState<MenuTypeProps>("soft");
   const [name, setName] = useState('');
-  const [skills, setSkills] = useState<SkillModel[]>([]);
   const [skill, setSkill] = useState<SkillModel>({} as SkillModel);
   const [sheetPosition, setSheetPosition] = useState(0);
 
@@ -52,7 +60,6 @@ export function Home() {
       });
     }
 
-    fetchSkills()
     setName('')
     bottomSheetRef.current.collapse()
   }
@@ -62,7 +69,6 @@ export function Home() {
       item.destroyPermanently()
     })
 
-    fetchSkills()
     Toast.show({
       type: 'success',
       text1: 'Skill deleted!',
@@ -74,20 +80,6 @@ export function Home() {
     setName(item.name)
     bottomSheetRef.current.expand()
   }
-
-  const fetchSkills = async () => {
-    const skillsCollection = database.get<SkillModel>('skills');
-
-    const skillsResponse = await skillsCollection
-      .query( Q.where('type', type) )
-      .fetch()
-      
-    setSkills(skillsResponse)
-  }
-
-  useEffect(() => {
-    fetchSkills()
-  }, [type])
 
   useEffect(() => {
     if (skill.id && !sheetPosition) {
@@ -105,7 +97,7 @@ export function Home() {
       />
 
       <FlatList
-        data={skills}
+        data={skills.filter(skill => skill.type === type)}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <Skill
@@ -142,3 +134,10 @@ export function Home() {
     </Container>
   );
 }
+
+export default compose(
+  withDatabase,
+  withObservables([], ({ database }) => ({
+    skills: database.get('skills').query(),
+  })),
+)(Home)
